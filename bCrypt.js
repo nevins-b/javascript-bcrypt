@@ -481,10 +481,8 @@ bCrypt.prototype.hashpw = function(password, salt) {
 	var r2 = parseInt(salt.substring(off+1, off + 2));
 	rounds = r1+r2;
 	real_salt = salt.substring(off + 3, off + 25);
-	alert(real_salt);
 	try {
 		passwordb = this.stringToBytes(password + (minor >= 'a' ? "\000" : ""));
-		alert(passwordb);
 	} catch (err) {
 		throw "UTF-8 is not supported";
 	}
@@ -534,8 +532,10 @@ bCrypt.prototype.ord = function(string) {
 };
 bCrypt.prototype.gensalt = function(rounds) {
 	var iteration_count = rounds;
+	if(iteration_count < 4 || iteration_count > 31){
+		iteration_count = this.GENSALT_DEFAULT_LOG2_ROUNDS;
+	}
 	var input = this.get_random_bytes(16);
-	var itoa64 = './ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 	var output = '$2a$';
 	output += String.fromCharCode(this.ord('0') + iteration_count / 10);
 	output += String.fromCharCode(this.ord('0') + iteration_count % 10);
@@ -543,20 +543,20 @@ bCrypt.prototype.gensalt = function(rounds) {
 	var i = 0;
 	do {
 		var c1 = this.ord(input[i++]);
-		output += itoa64[c1 >> 2];
+		output += this.base64_code[c1 >> 2];
 		c1 = (c1 & 0x03) << 4;
 		if (i >= 16) {
-			output += itoa64[c1];
+			output += this.base64_code[c1];
 			break;
 		}
 		var c2 = this.ord(input[i++]);
 		c1 = c1 | c2 >> 4;
-		output += itoa64[c1];
+		output += this.base64_code[c1];
 		c1 = (c2 & 0x0f) << 2;
 		c2 = this.ord(input[i++]);
 		c1 = c1 | c2 >> 6;
-		output += itoa64[c1];
-		output += itoa64[c2 & 0x3f];
+		output += this.base64_code[c1];
+		output += this.base64_code[c2 & 0x3f];
 	} while (1);
 	return output;
 };
