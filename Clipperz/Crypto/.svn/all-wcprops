@@ -1,0 +1,35 @@
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/48/trunk/crypto.library/src/js/Clipperz/Crypto
+END
+SRP.js
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/!svn/ver/48/trunk/crypto.library/src/js/Clipperz/Crypto/SRP.js
+END
+PRNG.js
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/48/trunk/crypto.library/src/js/Clipperz/Crypto/PRNG.js
+END
+AES.js
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/!svn/ver/48/trunk/crypto.library/src/js/Clipperz/Crypto/AES.js
+END
+SHA.js
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/!svn/ver/48/trunk/crypto.library/src/js/Clipperz/Crypto/SHA.js
+END
+BigInt.js
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/!svn/ver/48/trunk/crypto.library/src/js/Clipperz/Crypto/BigInt.js
+END
