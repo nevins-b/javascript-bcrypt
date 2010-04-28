@@ -10,18 +10,50 @@
 <script src="Clipperz/Crypto/PRNG.js" type="text/javascript"></script>
 
 <script src="bCrypt.js" type="text/javascript"></script>
-</head>
-<body>
 <script type="text/javascript">
-MochiKit.Signal.connect(Clipperz.Crypto.PRNG.defaultRandomGenerator(), 'readyToGenerateRandomBytes', b);
-Clipperz.Crypto.PRNG.defaultRandomGenerator().fastEntropyAccumulationForTestingPurpose();
-function b(){
-	var b = new bCrypt();
-	var salt = b.gensalt(8);
-	alert(salt);
-	var hash = b.hashpw("test", salt);
+var bcrypt = new bCrypt();
+function crypt(form){
+	var salt;
+	if(form.salt.value){
+		salt = form.salt.value;
+	}else{
+		try{
+			salt = bcrypt.gensalt(form.rounds.value);
+		}catch(err){
+			alert(err);
+			return
+		}
+		form.salt.value = salt;
+	}
+	try{
+		var hash = bcrypt.hashpw(form.password.value, salt);
+	}catch(err){
+		alert(err);
+		return;
+	}
 	alert(hash);
 }
 </script>
+</head>
+<body>
+<form >
+<label for="password">Password: </label><input type="text" name="password" id="password"></input>
+<br />
+<label for="salt">Salt (Optional): </label><input type="text" name="salt" id="salt"></input>
+<br />
+<label for="rounds">Rounds: </label>
+<select id="rounds" name="rounds">
+  <option value=5>5</option>
+  <option value=6>6</option>
+  <option value=7>7</option>
+  <option value=8>8</option>
+  <option value=9>9</option>
+  <option value=10>10</option>
+  <option value=11>11</option>
+  <option value=12>12</option>
+</select>
+<br />
+<INPUT TYPE="button" NAME="button" Value="Generate Hash" onClick="crypt(this.form)">
+</form>
 </body>
 </html>

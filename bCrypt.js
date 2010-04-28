@@ -2,6 +2,7 @@ function bCrypt() {
 	this.GENSALT_DEFAULT_LOG2_ROUNDS = 10;
 	this.BCRYPT_SALT_LEN = 16;
 	this.BLOWFISH_NUM_ROUNDS = 16;
+	this.PRNG = Clipperz.Crypto.PRNG.defaultRandomGenerator();
 	this.P_orig = [0x243f6a88, 0x85a308d3, 0x13198a2e, 0x03707344, 0xa4093822,
 			0x299f31d0, 0x082efa98, 0xec4e6c89, 0x452821e6, 0x38d01377,
 			0xbe5466cf, 0x34e90c6c, 0xc0ac29b7, 0xc97c50dd, 0x3f84d5b5,
@@ -489,14 +490,15 @@ bCrypt.prototype.hashpw = function(password, salt) {
 	rs.push(rounds.toString());
 	rs.push("$");
 	rs.push(this.encode_base64(saltb, saltb.length));
-	rs
-			.push(this.encode_base64(hashed, this.bf_crypt_ciphertext.length
-							* 4 - 1));
+	rs.push(this.encode_base64(hashed, this.bf_crypt_ciphertext.length * 4 - 1));
 	return rs.join('');
 };
 
 bCrypt.prototype.gensalt = function(rounds) {
-	if (typeof(Clipperz.Crypto.PRNG) == 'undefined') { Clipperz.Crypto.PRNG = {}; }
+	if (typeof(this.PRNG) == 'undefined')
+		throw "PRNG not defined";
+	if(!this.PRNG.isReadyToGenerateRandomValues())
+		throw "PRNG is not ready to generate values, please wait";
 	var iteration_count = rounds;
 	if (iteration_count < 4 || iteration_count > 31) {
 		iteration_count = this.GENSALT_DEFAULT_LOG2_ROUNDS;
@@ -507,9 +509,6 @@ bCrypt.prototype.gensalt = function(rounds) {
 		output.push("0");
 	output.push(iteration_count.toString());
 	output.push('$');
-	output.push(this.encode_base64(Clipperz.Crypto.PRNG
-					.defaultRandomGenerator()
-					.getRandomBytes(this.BCRYPT_SALT_LEN).arrayValues(),
-			this.BCRYPT_SALT_LEN));
+	output.push(this.encode_base64(this.PRNG.getRandomBytes(this.BCRYPT_SALT_LEN).arrayValues(),this.BCRYPT_SALT_LEN));
 	return output.join('');
 };
