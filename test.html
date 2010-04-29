@@ -11,22 +11,10 @@
 
 <script src="bCrypt.js" type="text/javascript"></script>
 <script type="text/javascript">
-var bcrypt = new bCrypt();
+
 function crypt(form){
-	var salt;
-	if(form.salt.value){
-		salt = form.salt.value;
-	}else{
-		try{
-			salt = bcrypt.gensalt(form.rounds.value);
-		}catch(err){
-			alert(err);
-			return
-		}
-		form.salt.value = salt;
-	}
 	try{
-		var hash = bcrypt.hashpw(form.password.value, salt);
+		var hash = Crypto.bCrypt.hashpw(form.password.value);
 	}catch(err){
 		alert(err);
 		return;
