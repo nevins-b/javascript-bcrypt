@@ -108,6 +108,7 @@ Crypto.bCrypt.Salt = function(args){
 	args = args || {};
 	this._rounds = args.rounds || 8;
 	this._PRNG = args.PRNG || Clipperz.Crypto.PRNG.defaultRandomGenerator();
+	return this;
 }
 Crypto.bCrypt.Salt.prototype = MochiKit.Base.update(null, {
 	'asString': function() {
@@ -573,11 +574,10 @@ MochiKit.Base.update(Crypto.bCrypt, {
 		var saltb = [];
 		var hashed = [];
 		var minor = String.fromCharCode(0);
-		var rounds = 0;
 		var off = 0;
 		var rs = [];
 		if(salt == undefined || salt == null){
-			var saltGenerator = new Crypto.bCrypt.Salt({rounds : rounds});
+			var saltGenerator = new Crypto.bCrypt.Salt({rounds : rounds || 8});
 			rounds = saltGenerator.rounds();
 			salt = saltGenerator.salt();
 		}
@@ -594,8 +594,8 @@ MochiKit.Base.update(Crypto.bCrypt, {
 		// Extract number of rounds
 		if (salt[off + 2] > '$')
 			throw "Missing salt rounds";
-		var r1 = parseInt(salt.substring(off, off + 1)) * 10;
-		var r2 = parseInt(salt.substring(off + 1, off + 2));
+		var r1 = parseInt(salt.substring(off, off + 1),10) * 10;
+		var r2 = parseInt(salt.substring(off + 1, off + 2),10);
 		rounds = r1 + r2;
 		real_salt = salt.substring(off + 3, off + 25);
 		password = password + (minor >= 'a' ? "\000" : "");
