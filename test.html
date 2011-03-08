@@ -26,26 +26,26 @@ $(document).ready(function(){
 	id = setInterval(enable,250);
  });
 
-function crypt(form){
+function crypt(){
 		var salt;
-		if(form.salt.value){
-			salt = form.salt.value;
+		if($("#salt").val().length != 0){
+			salt = $("#salt").val();
 		}else{
 			try{
-                salt = bcrypt.gensalt(form.rounds.value);
+                salt = bcrypt.gensalt($("#rounds").val());
 			}catch(err){
                 alert(err);
                 return
 			}
-			form.salt.value = salt;
+			$("#salt").val(salt);
 		}
         try{
-                var hash = bcrypt.hashpw(password, salt);
+                var hash = bcrypt.hashpw($("#password").val(), $("#salt").val());
         }catch(err){
                 alert(err);
                 return;
         }
-		form.hash.value = hash;
+		$("#hash").val(hash);
 }
 </script>
 </head>
@@ -67,7 +67,7 @@ function crypt(form){
   <option value=12>12</option>
 </select>
 <br />
-<INPUT TYPE="button" NAME="button" Value="Waiting for PRNG..." onClick="crypt(this.form)" id="submit" disabled="disabled">
+<INPUT TYPE="button" NAME="button" value="Waiting for PRNG..." onClick="crypt()" id="submit" disabled="disabled" />
 <br />
 <br />
 <label for="hash">Hash: </label><input size=60 type="text" name="hash" id="hash" READONLY></input>
