@@ -26,13 +26,13 @@ $(document).ready(function(){
 	id = setInterval(enable,250);
  });
 
-function crypt(password,rounds){
+function crypt(form){
 		var salt;
 		if(form.salt.value){
 			salt = form.salt.value;
 		}else{
 			try{
-                salt = bcrypt.gensalt(rounds);
+                salt = bcrypt.gensalt(form.rounds.value);
 			}catch(err){
                 alert(err);
                 return
