@@ -292,8 +292,8 @@ bCrypt.prototype.decode_base64 = function(s, maxolen) {
 	if (maxolen <= 0)
 		throw "Invalid maxolen";
 	while (off < slen - 1 && olen < maxolen) {
-		c1 = this.char64(s[off++]);
-		c2 = this.char64(s[off++]);
+		c1 = this.char64(s.charAt(off++));
+		c2 = this.char64(s.charAt(off++));
 		if (c1 == -1 || c2 == -1) {
 			break;
 		}
@@ -303,7 +303,7 @@ bCrypt.prototype.decode_base64 = function(s, maxolen) {
 		if (++olen >= maxolen || off >= slen) {
 			break;
 		}
-		c3 = this.char64(s[off++]);
+		c3 = this.char64(s.charAt(off++));
 		if (c3 == -1) {
 			break;
 		}
@@ -313,7 +313,7 @@ bCrypt.prototype.decode_base64 = function(s, maxolen) {
 		if (++olen >= maxolen || off >= slen) {
 			break;
 		}
-		c4 = this.char64(s[off++]);
+		c4 = this.char64(s.charAt(off++));
 		o = this.getByte((c3 & 0x03) << 6);
 		o |= c4;
 		rs.push(String.fromCharCode(o));
@@ -412,6 +412,7 @@ bCrypt.prototype.ekskey = function(data, key) {
 		this.S[i + 1] = lr[1];
 	}
 };
+
 bCrypt.prototype.crypt_raw = function(password, salt, log_rounds) {
 	var rounds;
 	var i;
@@ -457,19 +458,19 @@ bCrypt.prototype.hashpw = function(password, salt) {
 	var off = 0;
 	var rs = [];
 
-	if (salt[0] != '$' || salt[1] != '2')
+	if (salt.charAt(0) != '$' || salt.charAt(1) != '2')
 		throw "Invalid salt version";
-	if (salt[2] == '$')
+	if (salt.charAt(2) == '$')
 		off = 3;
 	else {
-		minor = salt[2];
-		if (minor != 'a' || salt[3] != '$')
+		minor = salt.charAt(2);
+		if (minor != 'a' || salt.charAt(3) != '$')
 			throw "Invalid salt revision";
 		off = 4;
 	}
 
 	// Extract number of rounds
-	if (salt[off + 2] > '$')
+	if (salt.charAt(off + 2) > '$')
 		throw "Missing salt rounds";
 	var r1 = parseInt(salt.substring(off, off + 1)) * 10;
 	var r2 = parseInt(salt.substring(off + 1, off + 2));
@@ -477,7 +478,7 @@ bCrypt.prototype.hashpw = function(password, salt) {
 	real_salt = salt.substring(off + 3, off + 25);
 	password = password + (minor >= 'a' ? "\000" : "");
 	for (var r = 0; r < password.length; r++) {
-		passwordb.push(this.getByte(password[r]));
+		passwordb.push(this.getByte(password.charAt(r)));
 	}
 	saltb = this.decode_base64(real_salt, this.BCRYPT_SALT_LEN);
 	hashed = this.crypt_raw(passwordb, saltb, rounds);
