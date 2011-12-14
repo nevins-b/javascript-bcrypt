@@ -3,6 +3,7 @@ function bCrypt() {
 	this.BCRYPT_SALT_LEN = 16;
 	this.BLOWFISH_NUM_ROUNDS = 16;
 	this.PRNG = Clipperz.Crypto.PRNG.defaultRandomGenerator();
+	this.MAX_EXECUTION_TIME = 100;
 	this.P_orig = [0x243f6a88, 0x85a308d3, 0x13198a2e, 0x03707344, 0xa4093822,
 			0x299f31d0, 0x082efa98, 0xec4e6c89, 0x452821e6, 0x38d01377,
 			0xbe5466cf, 0x34e90c6c, 0xc0ac29b7, 0xc97c50dd, 0x3f84d5b5,
@@ -413,12 +414,12 @@ bCrypt.prototype.ekskey = function(data, key) {
 	}
 };
 
-bCrypt.prototype.crypt_raw = function(password, salt, log_rounds) {
+bCrypt.prototype.crypt_raw = function(password, salt, log_rounds, callback, progress) {
 	var rounds;
-	var i;
 	var j;
 	var cdata = this.bf_crypt_ciphertext.slice();
 	var clen = cdata.length;
+	var one_percent;
 
 	if (log_rounds < 4 || log_rounds > 31)
 		throw "Bad number of rounds";
@@ -426,29 +427,50 @@ bCrypt.prototype.crypt_raw = function(password, salt, log_rounds) {
 		throw "Bad salt length";
 
 	rounds = 1 << log_rounds;
+	one_percent = Math.floor(rounds / 100) + 1;
 	this.init_key();
 	this.ekskey(salt, password);
-	for (i = 0; i < rounds; i++) {
-		this.key(password);
-		this.key(salt);
-	}
 
-	for (i = 0; i < 64; i++) {
-		for (j = 0; j < (clen >> 1); j++) {
-			this.encipher(cdata, j << 1);
-		}
-	}
-
-	var ret = [];
-	for (i = 0; i < clen; i++) {
-		ret.push(this.getByte((cdata[i] >> 24) & 0xff));
-		ret.push(this.getByte((cdata[i] >> 16) & 0xff));
-		ret.push(this.getByte((cdata[i] >> 8) & 0xff));
-		ret.push(this.getByte(cdata[i] & 0xff));
-	}
-	return ret;
+	obj = this;
+	var i = 0;
+	setTimeout(function(){
+		if(i < rounds){
+			var start = new Date();
+			for (; i < rounds;) {
+				i = i + 1;
+				obj.key(password);
+				obj.key(salt);
+		                if(i % one_percent == 0){
+			        	progress();
+                		}
+		                if((new Date() - start) > obj.MAX_EXECUTION_TIME){
+                    			break;
+		                }
+            		}
+		        setTimeout(arguments.callee, 0);
+        	}else{
+ 	        	for (i = 0; i < 64; i++) {
+                		for (j = 0; j < (clen >> 1); j++) {
+                    			obj.encipher(cdata, j << 1);
+                		}
+            		}
+			var ret = [];
+		        for (i = 0; i < clen; i++) {
+                		ret.push(obj.getByte((cdata[i] >> 24) & 0xff));
+                		ret.push(obj.getByte((cdata[i] >> 16) & 0xff));
+                		ret.push(obj.getByte((cdata[i] >> 8) & 0xff));
+                		ret.push(obj.getByte(cdata[i] & 0xff));
+            		}
+            		callback(ret);
+        	}
+    	}, 0);
 };
-bCrypt.prototype.hashpw = function(password, salt) {
+/*
+ * callback: a function that will be passed the hash when it is complete
+ * progress: optional - this function will be called every time 1% of hashing
+ *      is complete.
+ */
+bCrypt.prototype.hashpw = function(password, salt, callback, progress) {
 	var real_salt;
 	var passwordb = [];
 	var saltb = [];
@@ -456,7 +478,10 @@ bCrypt.prototype.hashpw = function(password, salt) {
 	var minor = String.fromCharCode(0);
 	var rounds = 0;
 	var off = 0;
-	var rs = [];
+
+	if (!progress){
+	        var progress = function() {};
+	}
 
 	if (salt.charAt(0) != '$' || salt.charAt(1) != '2')
 		throw "Invalid salt version";
@@ -481,18 +506,21 @@ bCrypt.prototype.hashpw = function(password, salt) {
 		passwordb.push(this.getByte(password.charAt(r)));
 	}
 	saltb = this.decode_base64(real_salt, this.BCRYPT_SALT_LEN);
-	hashed = this.crypt_raw(passwordb, saltb, rounds);
-	rs.push("$2");
-	if (minor >= 'a')
-		rs.push(minor);
-	rs.push("$");
-	if (rounds < 10)
-		rs.push("0");
-	rs.push(rounds.toString());
-	rs.push("$");
-	rs.push(this.encode_base64(saltb, saltb.length));
-	rs.push(this.encode_base64(hashed, this.bf_crypt_ciphertext.length * 4 - 1));
-	return rs.join('');
+	var obj = this;
+	this.crypt_raw(passwordb, saltb, rounds, function(hashed) {
+		var rs = [];
+	        rs.push("$2");
+	        if (minor >= 'a')
+			rs.push(minor);
+		rs.push("$");
+        	if (rounds < 10)
+			rs.push("0");
+        	rs.push(rounds.toString());
+	        rs.push("$");
+	        rs.push(obj.encode_base64(saltb, saltb.length));
+	        rs.push(obj.encode_base64(hashed, obj.bf_crypt_ciphertext.length * 4 - 1));
+	        callback(rs.join(''));
+	}, progress);
 };
 
 bCrypt.prototype.gensalt = function(rounds) {
