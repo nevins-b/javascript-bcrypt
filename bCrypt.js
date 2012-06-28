@@ -431,7 +431,7 @@ bCrypt.prototype.crypt_raw = function(password, salt, log_rounds, callback, prog
 	this.init_key();
 	this.ekskey(salt, password);
 
-	obj = this;
+	var obj = this;
 	var i = 0;
 	setTimeout(function(){
 		if(i < rounds){
