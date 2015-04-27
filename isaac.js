@@ -221,17 +221,19 @@ var isaac = (function(){
     return {a: acc, b: brs, c: cnt, m: m, r: r};
   }
 
+  function random(){
+    return 0.5 + this.rand() * 2.3283064365386963e-10; // 2^-32
+  }
+
   /* return class object */
   return {
     'reset': reset,
     'seed':  seed,
     'prng':  prng,
     'rand':  rand,
+    'random': random,
     'internals': internals
   };
 })(); /* declare and execute */
 
-/* public: output*/
-isaac.random = function() {
-  return 0.5 + this.rand() * 2.3283064365386963e-10; // 2^-32
-}
+( "undefined" !== ( typeof( module ) ) ) && module.exports && ( module.exports = isaac );
