@@ -501,8 +501,35 @@ bCrypt.prototype.hashpw = function(password, salt, callback, progress) {
 	rounds = r1 + r2;
 	real_salt = salt.substring(off + 3, off + 25);
 	password = password + (minor >= 'a' ? "\000" : "");
-	for (var r = 0; r < password.length; r++) {
-		passwordb.push(this.getByte(password.charAt(r)));
+	for (var n = 0; n < password.length; n++) {
+    var c = password.charCodeAt(n);
+    if (c < 128) {
+        passwordb.push(c);
+    }
+    else if((c > 127) && (c < 2048)) {
+        passwordb.push((c >> 6) | 192);
+        passwordb.push((c & 63) | 128);
+    }
+    else if ((c >= 55296) && (c <= 56319)) {
+        n++;
+        if (n > password.length) {
+            throw "utf-16 Decoding error: lead surrogate found without trail surrogate";
+        }
+        c = password.charCodeAt(n);
+        if (c < 56320 || c > 57343) {
+            throw "utf-16 Decoding error: trail surrogate not in the range of 0xdc00 through 0xdfff";
+        }
+        c = ((password.charCodeAt(n - 1) - 55296) << 10) + (c - 56320) + 65536;
+        passwordb.push((c >> 18) | 240);
+        passwordb.push(((c >> 12) & 63) | 128);
+        passwordb.push(((c >> 6) & 63) | 128);
+        passwordb.push((c & 63) | 128);
+    }
+    else {
+        passwordb.push((c >> 12) | 224);
+        passwordb.push(((c >> 6) & 63) | 128);
+        passwordb.push((c & 63) | 128);
+    }
 	}
 	saltb = this.decode_base64(real_salt, this.BCRYPT_SALT_LEN);
 	var obj = this;
@@ -533,7 +560,7 @@ bCrypt.prototype.gensalt = function(rounds) {
 		output.push("0");
 	output.push(iteration_count.toString());
 	output.push('$');
-	var s1 = [];	
+	var s1 = [];
 	for (var r = 0; r < this.BCRYPT_SALT_LEN; r++){
 		s1.push(Math.abs(isaac.rand()));
 	}
