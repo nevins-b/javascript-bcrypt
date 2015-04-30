@@ -413,15 +413,14 @@ bCrypt.prototype.ekskey = function(data, key) {
 	}
 };
 
-bCrypt.prototype.crypt_raw = function(password, salt, log_rounds, callback, progress) {
+bCrypt.prototype.crypt_raw = function(password, salt, log_rounds, cdata, callback, progress) {
 	var rounds;
 	var j;
-	var cdata = this.bf_crypt_ciphertext.slice();
 	var clen = cdata.length;
 	var one_percent;
 
-	if (log_rounds < 4 || log_rounds > 31)
-		throw "Bad number of rounds";
+	if (log_rounds < 4 || log_rounds > 30)
+		throw "Rounded exceded maximum (30)!";
 	if (salt.length != this.BCRYPT_SALT_LEN)
 		throw "Bad salt length";
 
@@ -435,7 +434,7 @@ bCrypt.prototype.crypt_raw = function(password, salt, log_rounds, callback, prog
 	setTimeout(function(){
 		if(i < rounds){
 			var start = new Date();
-			for (; i < rounds;) {
+			for (; i != rounds;) {
 				i = i + 1;
 				obj.key(password);
 				obj.key(salt);
@@ -533,7 +532,7 @@ bCrypt.prototype.hashpw = function(password, salt, callback, progress) {
 	}
 	saltb = this.decode_base64(real_salt, this.BCRYPT_SALT_LEN);
 	var obj = this;
-	this.crypt_raw(passwordb, saltb, rounds, function(hashed) {
+	this.crypt_raw(passwordb, saltb, rounds, obj.bf_crypt_ciphertext.slice(), function(hashed) {
 		var rs = [];
 	        rs.push("$2");
 	        if (minor >= 'a')
@@ -551,8 +550,8 @@ bCrypt.prototype.hashpw = function(password, salt, callback, progress) {
 
 bCrypt.prototype.gensalt = function(rounds) {
 	var iteration_count = rounds;
-	if (iteration_count < 4 || iteration_count > 31) {
-		iteration_count = this.GENSALT_DEFAULT_LOG2_ROUNDS;
+	if (iteration_count < 4 || iteration_count > 30) {
+		throw "Rounds exceded maximum (30)!"
 	}
 	var output = [];
 	output.push("$2a$");
