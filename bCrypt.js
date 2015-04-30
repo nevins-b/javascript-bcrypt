@@ -570,3 +570,26 @@ bCrypt.prototype.gensalt = function(rounds) {
 bCrypt.prototype.ready = function(){
 	return true;
 };
+
+bCrypt.prototype.checkpw = function(plaintext, hashed, callback, progress) {
+	var off = 0;
+	if (hashed.charAt(0) != '$' || hashed.charAt(1) != '2')
+		throw "Invalid salt version";
+	if (hashed.charAt(2) == '$')
+		off = 3;
+	else {
+		minor = hashed.charAt(2);
+		if (minor != 'a' || hashed.charAt(3) != '$') {
+			throw "Invalid salt revision";
+		}
+		off = 4;
+	}
+	salt = hashed.substring(0, off + 25)
+	this.hashpw(plaintext, salt, function(try_pass) {
+		var ret = 0;
+		for(var i = 0; i < hashed.length; i++){
+			ret |= bcrypt.getByte(hashed[i]) ^ bcrypt.getByte(try_pass[i])
+		}
+		callback(ret == 0);
+	}, progress);
+};

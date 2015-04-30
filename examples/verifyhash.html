@@ -1,0 +1,64 @@
+<html>
+<meta http-equiv="Content-Type" content="text/html;charset=windows-1252" >
+<head>
+<script src="../isaac.js" type="text/javascript"></script>
+<script src="../bCrypt.js" type="text/javascript"></script>
+
+<link href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/themes/smoothness/jquery-ui.css" rel="stylesheet" type="text/css"/>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js" type="text/javascript"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
+<script type="text/javascript">
+var id;
+var bcrypt = new bCrypt();
+function enable(){
+	if(bcrypt.ready()){
+		$("#submit").removeAttr("disabled");
+		$("#submit").attr("value","Verify");
+		clearInterval(id);
+	}
+}
+$(document).ready(function(){
+	 id = setInterval(enable,250);
+	 $("#progressbar").progressbar({ value: 0 });
+ });
+
+function verify(){
+      try{
+         	$("#progressbar").progressbar({ value: 0 });
+					bcrypt.checkpw(
+						$("#password").val(),
+						$("#hash").val(),
+						function(res){
+						    	$("#result").val(res);
+									$("#progressbar").progressbar({ value: 100 });
+						},
+						function() {
+              	var value = $('#progressbar').progressbar( "option", "value" );
+                  	$('#progressbar').progressbar({ value: value + 1 });
+              });
+      }catch(err){
+              alert(err);
+              return;
+      }
+}
+</script>
+<style type="text/css">
+    #progressbar {
+        width: 400px;
+    }
+</style>
+</head>
+<body>
+<form >
+<label for="password">Password: </label><input size=30 type="text" name="password" id="password"></input>
+<br />
+<label for="hash">Hash: </label><input size=60 type="text" name="hash" id="hash"></input>
+<br />
+<INPUT TYPE="button" NAME="button" value="Waiting for PRNG..." onClick="verify()" id="submit"/>
+<br />
+<br />
+<label for="result">Valid: </label><input size=60 type="text" name="result" id="result" READONLY></input>
+</form>
+<div id="progressbar"></div>
+</body>
+</html>
