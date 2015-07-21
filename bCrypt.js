@@ -419,8 +419,10 @@ bCrypt.prototype.crypt_raw = function(password, salt, log_rounds, cdata, callbac
 	var clen = cdata.length;
 	var one_percent;
 
-	if (log_rounds < 4 || log_rounds > 30)
-		throw "Rounded exceded maximum (30)!";
+	if log_rounds < 4
+		throw "Minium of 4 rounds required, changing to default";
+	if log_rounds > 30
+		throw "Maximum of 30 rounds exceded";
 	if (salt.length != this.BCRYPT_SALT_LEN)
 		throw "Bad salt length";
 
