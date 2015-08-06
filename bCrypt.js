@@ -419,9 +419,9 @@ bCrypt.prototype.crypt_raw = function(password, salt, log_rounds, cdata, callbac
 	var clen = cdata.length;
 	var one_percent;
 
-	if log_rounds < 4
+	if (log_rounds < 4)
 		throw "Minium of 4 rounds required, changing to default";
-	if log_rounds > 30
+	if (log_rounds > 30)
 		throw "Maximum of 30 rounds exceded";
 	if (salt.length != this.BCRYPT_SALT_LEN)
 		throw "Bad salt length";
@@ -480,7 +480,7 @@ bCrypt.prototype.hashpw = function(password, salt, callback, progress) {
 	var off = 0;
 
 	if (!progress){
-	        var progress = function() {};
+		progress = function() {};
 	}
 
 	if (salt.charAt(0) != '$' || salt.charAt(1) != '2')
@@ -565,7 +565,7 @@ bCrypt.prototype.gensalt = function(rounds) {
 	for (var r = 0; r < this.BCRYPT_SALT_LEN; r++){
 		s1.push(Math.abs(isaac.rand()));
 	}
-	output.push(this.encode_base64(s1,this.BCRYPT_SALT_LEN))
+	output.push(this.encode_base64(s1,this.BCRYPT_SALT_LEN));
 	return output.join('');
 };
 
@@ -586,11 +586,12 @@ bCrypt.prototype.checkpw = function(plaintext, hashed, callback, progress) {
 		}
 		off = 4;
 	}
-	salt = hashed.substring(0, off + 25)
+	salt = hashed.substring(0, off + 25);
+	var that = this;
 	this.hashpw(plaintext, salt, function(try_pass) {
 		var ret = 0;
 		for(var i = 0; i < hashed.length; i++){
-			ret |= bcrypt.getByte(hashed[i]) ^ bcrypt.getByte(try_pass[i])
+			ret |= that.getByte(hashed[i]) ^ that.getByte(try_pass[i])
 		}
 		callback(ret == 0);
 	}, progress);
