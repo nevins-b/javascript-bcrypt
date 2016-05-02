@@ -395,13 +395,13 @@ function key(key, state) {
 		state.P[i] = state.P[i] ^ streamtoword(key, state);
 	}
 	for (i = 0; i < plen; i += 2) {
-		state = encipher(lr, 0, state);
+		encipher(lr, 0, state);
 		state.P[i] = lr[0];
 		state.P[i + 1] = lr[1];
 	}
 
 	for (i = 0; i < slen; i += 2) {
-		state = encipher(lr, 0, state);
+		encipher(lr, 0, state);
 		state.S[i] = lr[0];
 		state.S[i + 1] = lr[1];
 	}
@@ -421,14 +421,14 @@ function ekskey(data, key, state) {
 	for (i = 0; i < plen; i += 2) {
 		lr[0] ^= streamtoword(data, state);
 		lr[1] ^= streamtoword(data, state);
-		state = encipher(lr, 0, state);
+		encipher(lr, 0, state);
 		state.P[i] = lr[0];
 		state.P[i + 1] = lr[1];
 	}
 	for (i = 0; i < slen; i += 2) {
 		lr[0] ^= streamtoword(data, state);
 		lr[1] ^= streamtoword(data, state);
-		state = encipher(lr, 0, state);
+		encipher(lr, 0, state);
 		state.S[i] = lr[0];
 		state.S[i + 1] = lr[1];
 	}
@@ -451,15 +451,15 @@ function crypt_raw(password, salt, log_rounds, cdata, callback, progress) {
 	rounds = 1 << log_rounds;
 	one_percent = Math.floor(rounds / 100) + 1;
 	var state = new keyState();
-	state = ekskey(salt, password, state);
+	ekskey(salt, password, state);
 	var i = 0;
 	setTimeout(function(){
 		if(i < rounds){
 			var start = new Date();
 			for (; i != rounds;) {
 				i = i + 1;
-				state = key(password, state);
-				state = key(salt, state);
+				key(password, state);
+				key(salt, state);
 		    if(i % one_percent == 0){
 	      	progress();
 	      }
@@ -471,7 +471,7 @@ function crypt_raw(password, salt, log_rounds, cdata, callback, progress) {
     }else{
  	    for (i = 0; i < 64; i++) {
       		for (j = 0; j < (clen >> 1); j++) {
-          			state = encipher(cdata, j << 1, state);
+          			encipher(cdata, j << 1, state);
       		}
   		}
 			var ret = [];
@@ -485,11 +485,47 @@ function crypt_raw(password, salt, log_rounds, cdata, callback, progress) {
   	}
 	}, 0);
 };
-	/*
-	 * callback: a function that will be passed the hash when it is complete
-	 * progress: optional - this function will be called every time 1% of hashing
-	 *      is complete.
-	 */
+
+function password_to_bytes(password) {
+	var passwordb = [];
+	for (var n = 0; n < password.length; n++) {
+    var c = password.charCodeAt(n);
+    if (c < 128) {
+        passwordb.push(c);
+    }
+    else if((c > 127) && (c < 2048)) {
+        passwordb.push((c >> 6) | 192);
+        passwordb.push((c & 63) | 128);
+    }
+    else if ((c >= 55296) && (c <= 56319)) {
+        n++;
+        if (n > password.length) {
+            throw "utf-16 Decoding error: lead surrogate found without trail surrogate";
+        }
+        c = password.charCodeAt(n);
+        if (c < 56320 || c > 57343) {
+            throw "utf-16 Decoding error: trail surrogate not in the range of 0xdc00 through 0xdfff";
+        }
+        c = ((password.charCodeAt(n - 1) - 55296) << 10) + (c - 56320) + 65536;
+        passwordb.push((c >> 18) | 240);
+        passwordb.push(((c >> 12) & 63) | 128);
+        passwordb.push(((c >> 6) & 63) | 128);
+        passwordb.push((c & 63) | 128);
+    }
+    else {
+        passwordb.push((c >> 12) | 224);
+        passwordb.push(((c >> 6) & 63) | 128);
+        passwordb.push((c & 63) | 128);
+    }
+	}
+	return passwordb
+};
+
+/*
+ * callback: a function that will be passed the hash when it is complete
+ * progress: optional - this function will be called every time 1% of hashing
+ *      is complete.
+ */
 function hashpw(password, salt, callback, progress) {
 	var real_salt;
 	var passwordb = [];
@@ -522,36 +558,7 @@ function hashpw(password, salt, callback, progress) {
 	rounds = r1 + r2;
 	real_salt = salt.substring(off + 3, off + 25);
 	password = password + (minor >= 'a' ? "\000" : "");
-	for (var n = 0; n < password.length; n++) {
-    var c = password.charCodeAt(n);
-    if (c < 128) {
-        passwordb.push(c);
-    }
-    else if((c > 127) && (c < 2048)) {
-        passwordb.push((c >> 6) | 192);
-        passwordb.push((c & 63) | 128);
-    }
-    else if ((c >= 55296) && (c <= 56319)) {
-        n++;
-        if (n > password.length) {
-            throw "utf-16 Decoding error: lead surrogate found without trail surrogate";
-        }
-        c = password.charCodeAt(n);
-        if (c < 56320 || c > 57343) {
-            throw "utf-16 Decoding error: trail surrogate not in the range of 0xdc00 through 0xdfff";
-        }
-        c = ((password.charCodeAt(n - 1) - 55296) << 10) + (c - 56320) + 65536;
-        passwordb.push((c >> 18) | 240);
-        passwordb.push(((c >> 12) & 63) | 128);
-        passwordb.push(((c >> 6) & 63) | 128);
-        passwordb.push((c & 63) | 128);
-    }
-    else {
-        passwordb.push((c >> 12) | 224);
-        passwordb.push(((c >> 6) & 63) | 128);
-        passwordb.push((c & 63) | 128);
-    }
-	}
+	passwordb = password_to_bytes(password)
 	saltb = decode_base64(real_salt, BCRYPT_SALT_LEN);
 	crypt_raw(
 		passwordb,
@@ -559,7 +566,6 @@ function hashpw(password, salt, callback, progress) {
 		rounds,
 		BF_CRYPT_CIPHERTEXT.slice(0),
 		function(hashed) {
-			console.log(hashed);
 			var rs = [];
 	    rs.push("$2");
 	    if (minor >= 'a')
