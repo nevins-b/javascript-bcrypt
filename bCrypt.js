@@ -593,7 +593,7 @@ function gensalt(rounds) {
         output.push("0");
     output.push(iteration_count.toString());
     output.push('$');
-    var s1 = new int8Array(BCRYPT_SALT_LEN);
+    var s1 = new Int8Array(BCRYPT_SALT_LEN);
     window.crypto.getRandomValues(s1);
     output.push(encode_base64(s1, BCRYPT_SALT_LEN));
     return output.join('');
